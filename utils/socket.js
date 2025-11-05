@@ -14,9 +14,8 @@ const initSocket = (server) => {
 
     socket.on("message", () => {});
 
-    socket.on("joinChat", ({ loggedInUserId, targetUserId }) => {
-      const room = [loggedInUserId, targetUserId].sort().join("_");
-      socket.join(room);
+    socket.on("joinChat", (chatId) => {
+      socket.join(chatId);
     });
 
     socket.on(
@@ -44,6 +43,7 @@ const initSocket = (server) => {
           message,
           senderId: loggedInUserId,
           from: firstName,
+          timeStamp: new Date(),
         });
 
         //   participants: { $in: [loggedInUserId] },
@@ -67,6 +67,39 @@ const initSocket = (server) => {
         // io.to(room).emit("updateChatList", formattedChats);
       }
     );
+
+    // Join a group chat room
+    socket.on("joinGroupChat", (chatId) => {
+      socket.join(chatId);
+    });
+
+
+
+    socket.on("sendMessageGroup", async ({ chatId, loggedInUserId, message, firstName }) => {
+      const roomId = chatId;
+      try {
+        let chat = await Chat.findById(chatId);
+        if (chat) {
+          // Save message to database
+          chat.messages.push({ sender: loggedInUserId, message });
+          await chat.save();
+          
+          // Emit message to all users in the group chat room
+          io.to(roomId).emit("receiveGroupMessage", {
+            message,
+            senderId: loggedInUserId,
+            from: firstName,
+            chatId: chatId,
+            timeStamp: new Date(),
+          });
+        } else {
+          socket.emit("error", { message: "Group chat not found" });
+        }
+      } catch (err) {
+        console.error("Error in sendMessageGroup:", err);
+        socket.emit("error", { message: "Failed to send message" });
+      }
+    });
   });
   return io;
 };
