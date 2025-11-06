@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const messageSchema = new mongoose.Schema({
   sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   message: String,
+  messageType: { type: String, enum: ["text", "image", "file"], default: "text" },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -6,6 +6,7 @@ const initSocket = require("./utils/socket");
 
 const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth");
+const fileUploadRouter = require("./routes/fileUpload");
 const profileRouter = require("./routes/profile");
 const userRouter = require("./routes/user");
 const requestRouter = require("./routes/request");
@@ -23,7 +24,8 @@ app.use("/", [
   profileRouter,
   userRouter,
   requestRouter,
-  chatRouter
+  chatRouter,
+  fileUploadRouter,
 ]);
 const server = http.createServer(app);
 const PORT = 3000;

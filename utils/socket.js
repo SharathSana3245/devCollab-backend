@@ -20,7 +20,7 @@ const initSocket = (server) => {
 
     socket.on(
       "sendMessage",
-      async ({ firstName, loggedInUserId, targetUserId, message }) => {
+      async ({ firstName, loggedInUserId, targetUserId, message, messageType = 'text' }) => {
         const room = [loggedInUserId, targetUserId].sort().join("_");
         try {
           let chat = await Chat.findOne({
@@ -33,7 +33,7 @@ const initSocket = (server) => {
               messages: [],
             });
           }
-          chat.messages.push({ sender: loggedInUserId, message });
+          chat.messages.push({ sender: loggedInUserId, message,messageType });
           await chat.save();
         } catch (err) {
           console.error("Error", err);
@@ -41,6 +41,7 @@ const initSocket = (server) => {
 
         io.to(room).emit("receiveMessage", {
           message,
+          messageType,
           senderId: loggedInUserId,
           from: firstName,
           timeStamp: new Date(),
@@ -75,18 +76,19 @@ const initSocket = (server) => {
 
 
 
-    socket.on("sendMessageGroup", async ({ chatId, loggedInUserId, message, firstName }) => {
+    socket.on("sendMessageGroup", async ({ chatId, loggedInUserId, message, firstName ,messageType = 'text'}) => {
       const roomId = chatId;
       try {
         let chat = await Chat.findById(chatId);
         if (chat) {
           // Save message to database
-          chat.messages.push({ sender: loggedInUserId, message });
+          chat.messages.push({ sender: loggedInUserId, message,messageType });
           await chat.save();
           
           // Emit message to all users in the group chat room
           io.to(roomId).emit("receiveGroupMessage", {
             message,
+            messageType,
             senderId: loggedInUserId,
             from: firstName,
             chatId: chatId,
